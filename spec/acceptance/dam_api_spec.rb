@@ -4,7 +4,7 @@ require 'json'
 require_relative '../../app/api'
 
 module DAM
-  describe 'DAM API' do
+  RSpec.describe 'DAM API' do
     include Rack::Test::Methods
 
     def app

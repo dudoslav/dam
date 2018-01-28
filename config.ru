@@ -1,2 +1,4 @@
 require_relative 'app/api'
-run DAM::API.new
+require_relative 'app/ui'
+
+run Rack::Cascade.new [DAM::API, DAM::UI]

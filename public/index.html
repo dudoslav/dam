@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>DAM</title>
+    <link rel="stylesheet" href="css/bulma.css">
+    <script defer src="js/fontawesome-all.js"></script>
+  </head>
+  <body>
+    <!-- HEADER -->
+    <section class="hero is-primary is-bold">
+      <div class="hero-body">
+        <div class="container has-text-centered">
+          <h1 class="title">
+            Download All Media
+          </h1>
+          <h2 class="subtitle">
+            DAM web interface
+          </h2>
+        </div>
+      </div>
+      <div class="hero-foot">
+        <nav class="tabs">
+          <div class="container has-text-centered">
+            <button class="button is-primary is-inverted is-outlined" onclick="open_download_modal()">Download</button>
+          </div>
+        </nav>
+      </div>
+    </section>
+    <!-- DOWNLOAD MODAL -->
+    <div id="download-modal" class="modal">
+      <div class="modal-background"></div>
+      <div class="modal-content">
+        <div class="field">
+          <label class="label has-text-white">URL</label>
+          <div class="control">
+            <input id="download-modal-input" class="input" type="text" placeholder="http://">
+          </div>
+        </div>
+        <div class="field">
+          <div class="control">
+            <button class="button" onclick="download_pressed()">Submit</button>
+          </div>
+        </div>
+      </div>
+      <button class="modal-close is-large" aria-label="close" onclick="close_download_modal()"></button>
+    </div>
+    <!-- DOWNLOAD LIST -->
+    <div class="container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Id</th>
+            <th>Name</th>
+            <th>Size</th>
+            <th>Path</th>
+            <th>Progress</th>
+          </tr>
+        </thead>
+        <tbody id="downloads-list">
+        </tbody>
+      </table>
+    </div>
+    <script type="text/javascript">
+      let downloads_list = document.getElementById('downloads-list')
+      let download_modal = document.getElementById('download-modal')
+      let download_modal_input = document.getElementById('download-modal-input')
+
+      function create_download_item(d) {
+        let e = document.createElement('tr')
+        e.className += ' download-item'
+        e.id = d.id
+        e.innerHTML = `
+          <td><span class="tag" style="font-family: monospace">${d.id}</span></td>
+          <td>${d.name}</td>
+          <td>${d.size} B</td>
+          <td>${d.path}</td>
+          <td><progress value="${d.current}" max="${d.size}"></progress></td>
+          <td><button class="delete" onclick="stop_download('${d.id}')"></button></td>
+        `
+        return e
+      }
+
+      function refresh_downloads() {
+        fetch('/downloads')
+         .then(r => r.json())
+         .then(json => {
+           json.forEach(d => {
+             let e = document.getElementById(d.id)
+             if (e) e.replaceWith(create_download_item(d))
+             else downloads_list.appendChild(create_download_item(d))
+           });
+           [...document.getElementsByClassName('download-item')].forEach(e => {
+             if (!json.map(d => d.id).includes(e.id)) e.remove()
+           })
+         })
+      }
+      let refresh_timer = setInterval(refresh_downloads, 2000)
+
+      function start_download(url) {
+        fetch('/downloads', { method: 'POST', body: `{"uri": "${url}"}` })
+      }
+
+      function stop_download(id) {
+        fetch(`/downloads/${id}`, { method: 'DELETE' })
+      }
+
+      function open_download_modal() {
+        download_modal.classList.add('is-active')
+      }
+
+      function close_download_modal() {
+        download_modal.classList.remove('is-active')
+      }
+
+      function download_pressed() {
+        close_download_modal()
+        start_download(download_modal_input.value)
+      }
+    </script>
+  </body>
+</html>
