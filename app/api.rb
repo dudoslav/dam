@@ -9,6 +9,7 @@ module DAM
     register Sinatra::ConfigFile
 
     config_file '../config/config.yml'
+    config_file '/etc/dam.yml' if File.file? '/etc/dam.yml'
 
     def initialize(download_service: Download::Service.new(settings.download_folder))
       @download_service = download_service
