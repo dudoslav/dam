@@ -37,10 +37,31 @@
       function renderDownloads(downloads) {
         downloads.forEach(d => {
           let e = document.getElementById(d.id)
-          if (e) e.getElementsByTagName('progress')[0].value = d.current
+          if (e) updateDownloadsListItem(d, e)
           else downloads_list.appendChild(createDownloadsListItem(d))
         });
-        [...downloads_list.children].filter(li => !downloads.find(d => li.id == d.id)).forEach(li => li.remove())
+        [...downloads_list.children]
+          .filter(li => !downloads.find(d => li.id == d.id))
+          .forEach(li => li.remove())
+      }
+
+      function humanifySize(bytes) {
+        let suffixes = ['', 'K', 'M', 'G', 'T']
+        let suffix_index = 0
+        let size = bytes
+
+        while (size / 1000 > 1 && suffix_index < suffixes.length) {
+          size = Math.floor(size / 1000)
+          suffix_index++
+        }
+
+        return `${size} ${suffixes[suffix_index]}B`
+      }
+
+      function updateDownloadsListItem(download, li) {
+        li.getElementsByTagName('progress')[0].value = download.current
+        li.getElementsByTagName('progress')[0].max = download.size
+        document.getElementById(`${download.id}_size`).innerHTML = humanifySize(download.size)
       }
 
       function createDownloadsListItem(download) {
@@ -55,7 +76,7 @@
             </summary>
             <div class="flex-container">
               <div>URL: ${download.uri}</div>
-              <div>SIZE: ${download.size}B</div>
+              <div>SIZE: <span id="${download.id}_size">${humanifySize(download.size)}</span></div>
               <div>LOCATION: ${download.path}</div>
             </div>
           </details>
