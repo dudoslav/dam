@@ -1,5 +1,5 @@
 require 'uri'
-require 'open-uri'
+require 'net/http'
 
 module DAM
   module Download
@@ -12,12 +12,34 @@ module DAM
 
       def start
         @thread = Thread.new do
-          d = open(@uri,
-            content_length_proc: lambda { |s| @size = s },
-            progress_proc: lambda { |p| @current = p })
-
-          IO.copy_stream(d, @path)
+          fetch @uri
         end
+      end
+
+      def fetch(uri, limit = 10)
+        raise ArgumentError, 'Too many HTTP redirects' if limit == 0
+
+        Net::HTTP.start(uri.host) do |http|
+          http.request_get(uri.path) do |resp|
+            case resp
+            when Net::HTTPRedirection then
+              fetch(resp['location'], limit - 1)
+            else
+              @size = resp.header['content-length']
+              f = File.open(@path, 'w')
+              begin
+                resp.read_body do |segment|
+                  @current = (@current || 0) + segment.length
+                  f.write(segment)
+                end
+              ensure
+                f.close
+              end
+            end
+          end
+        end
+      rescue StandardError => e
+        @error = e.message
       end
 
       def stop
@@ -29,7 +51,8 @@ module DAM
           name: @name,
           path: @path,
           size: @size,
-          current: @current }
+          current: @current,
+          error: @error }
       end
     end
   end
