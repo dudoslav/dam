@@ -64,6 +64,11 @@
         li.getElementsByTagName('progress')[0].value = download.current
         li.getElementsByTagName('progress')[0].max = download.size
         document.getElementById(`${download.id}_size`).innerHTML = humanifySize(download.size)
+
+        if (download.error) {
+          document.getElementById(`${download.id}_summary`).style = 'background-color: #EF9A9A'
+          document.getElementById(`${download.id}_content`).innerHTML = download.error
+        }
       }
 
       function createDownloadsListItem(download) {
@@ -71,12 +76,12 @@
         e.id = download.id
         e.innerHTML = `
           <details>
-            <summary>
+            <summary id="${download.id}_summary">
               <span>${download.name}</span>
               <button class="delete-button" onclick="onDownloadDelete('${download.id}')">&#x00d7;</button>
               <progress value="${download.current}" max="${download.size}"></progress>
             </summary>
-            <div class="flex-container">
+            <div id="${download.id}_content" class="flex-container">
               <div>URL: ${download.uri}</div>
               <div>SIZE: <span id="${download.id}_size">${humanifySize(download.size)}</span></div>
               <div>LOCATION: ${download.path}</div>
