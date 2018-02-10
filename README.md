@@ -13,9 +13,23 @@ Backend application is devided into API and UI.
 
 ## Installation
 
+### AUR
+
 ```
+yaourt -S dam-git
+
+sudo systemctl start dam
+sudo systemctl enable dam
+```
+
+### From source
+
+```
+git clonse https://github.com/dudoslav/dam.git
+cd dam
+
 bundle install
-bundle exec rackup
+bundle exec rackup # Add options like port and address
 ```
 
 ## API
