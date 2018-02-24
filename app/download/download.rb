@@ -1,13 +1,16 @@
 require 'uri'
 require 'net/http'
 
+require_relative 'response_filename'
+
 module DAM
   module Download
     class Download
+      using ResponseFilename
+
       def initialize(uri, download_folder)
         @uri = URI.parse(uri)
-        @name = File.basename(@uri.path)
-        @path = File.join(download_folder, @name)
+        @download_folder = download_folder
       end
 
       def start
@@ -24,22 +27,35 @@ module DAM
             case resp
             when Net::HTTPRedirection then
               fetch(resp['location'], limit - 1)
-            else
-              @size = resp.header['content-length']
-              f = File.open(@path, 'w')
-              begin
-                resp.read_body do |segment|
-                  @current = (@current || 0) + segment.length
-                  f.write(segment)
-                end
-              ensure
-                f.close
-              end
+            when Net::HTTPSuccess then
+              puts 'before response_ok'
+              response_ok resp
+              puts 'after response_ok'
             end
           end
         end
       rescue StandardError => e
         @error = e.message
+      end
+
+      def response_ok(response)
+        @size = response.header['content-length']
+        @name = response.filename || File.basename(@uri.path)
+        @path = File.join(@download_folder, @name)
+
+        download_to_folder response
+      end
+
+      def download_to_folder(response)
+        f = File.open(@path, 'w')
+        begin
+          response.read_body do |segment|
+            @current = (@current || 0) + segment.length
+            f.write(segment)
+          end
+        ensure
+          f.close
+        end
       end
 
       def stop
