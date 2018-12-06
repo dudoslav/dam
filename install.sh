@@ -7,3 +7,5 @@ npm install && npm run build
 cd ..
 
 mv dam-web-ui/build public
+
+bundle install --deployment
