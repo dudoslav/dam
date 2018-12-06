@@ -1,0 +1,3 @@
+[submodule "dam-web-ui"]
+	path = dam-web-ui
+	url = git@github.com:dudoslav/dam-web-ui.git
